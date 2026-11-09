@@ -3,3 +3,4 @@ finished,track,tag,seed,official_budget,budget,val_score,seoul,busan,tokyo,osaka
 2026-11-09T16:08:13,A,balanced,0,True,249984,0.5076,0.4957,0.4712,0.5205,0.4347,0.6161,3722.1,mps,all training photos,9a6cc745ea82,,d106946
 2026-11-09T16:23:39,B,b1_mnv3l_320,,,265344,0.5631,0.554,0.5295,0.6083,0.4864,0.6371,3566.8,cuda,mobilenet_v3_large 320px; data/starter/train,,,75f2eea
 2026-11-09T20:58:21,A,balanced_drop,0,True,249984,0.5099,0.5359,0.459,0.5174,0.4234,0.6139,3491.7,mps,"selection.csv, 44142 rows",9a6cc745ea82,92442aae7b8b,73c703b
+2026-11-09T21:15:45,B,b2_mnv3l_384,,,265344,0.5699,0.5864,0.5129,0.631,0.4699,0.6491,4361.3,cuda,mobilenet_v3_large 384px; data/starter/train,,,4092bc6
