@@ -1,0 +1,8 @@
+city      selected     of   by source
+seoul        11249  11274   commons 6746, osv5m 319, youtube 4184
+busan         5162   5191   commons 3459, youtube 1703
+tokyo        13321  13347   commons 6955, osv5m 1915, youtube 4451
+osaka         7175   7200   commons 5322, osv5m 341, youtube 1512
+taipei        7235   7245   commons 5658, osv5m 533, youtube 1044
+total 44142 rows
+dropped: 115 사람사진과 음식 사진 그 두개는 어디 나라인지정도까진 추측이 가능해도 도시를 알기는 어려움 그리고 의미없는 자동차 이런거 다 없앰

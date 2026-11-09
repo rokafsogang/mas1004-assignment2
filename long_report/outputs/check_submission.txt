@@ -1,0 +1,12 @@
+/Users/rokaf_david/Documents/mas1004-assignment2/submission/model.onnx: 16.8 MB, 4.20 million parameters, 0.63 billion multiply-adds per 384 x 384 photo
+  limits: 12 million parameters, 2.0 billion multiply-adds
+  format and limits: OK
+
+/Users/rokaf_david/Documents/mas1004-assignment2/data/starter/val: score 0.569 on 12077 photos (115s)
+  seoul 0.584, busan 0.513, tokyo 0.630, osaka 0.470, taipei 0.650
+  confusion (rows: true city, columns: answer):
+    seoul    1422   256   336   163   258
+    busan     399   713   117    64    97
+    tokyo     424    85  2446   638   288
+    osaka     176    93   690  1000   169
+    taipei    312    66   233   175  1457

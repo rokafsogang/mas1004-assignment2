@@ -1,84 +1,148 @@
-% MAS1004 Assignment 2: long report.
-%
-% You fill this in with your agent, in your repository. AGENTS.md tells the
-% agent how. Red text in the PDF is what still has to be replaced.
-%
-% - Pictures go in figures/. Copy them from results/, which is not in git.
-% - Outputs go in outputs/: copy experiments.csv, LOG.md and the outputs of
-%   check_submission.py and curate.py count here. \outputfile{outputs/...}
-%   prints a file exactly as it is. Every number in this report has to come
-%   from such an output.
-%
-% To make the PDF: compress this folder into a zip, and on Overleaf choose
-% New Project, Upload Project. Set Menu, Compiler to XeLaTeX, and Recompile.
+% MAS1004 Assignment 2: long report (written with my agent).
+% Every number below comes from experiments.csv, results/*/result.json or the
+% saved outputs in outputs/, all printed by code in this repository.
 
 \documentclass[11pt]{article}
 \usepackage{mas1004}
 
 \reporttitle{Assignment 2: Long report}
-\studentname{Your name}
-\studentid{Your student ID}
+\studentname{이다윗}
+\studentid{20231800}
 
 \begin{document}
 \makeheader
 
-\fillin{Your leaderboard nickname, and the tags of your last Track A and Track B releases.}
+리더보드 닉네임: \texttt{rokafsogang}\quad 레포: \url{https://github.com/rokafsogang/mas1004-assignment2}\\
+마지막 릴리즈: Track A \texttt{track-a-3} (balanced + 사진 115장 제외), Track B \texttt{track-b-2} (MobileNetV3-Large, 384px).
 
-% The sections below are a suggestion. Change, merge or add sections as you
-% like; README.md, "The long report", says what a reader should be able to see.
+\textbf{학습 환경.} Track A는 MacBook Air(M5)의 GPU(\texttt{mps})에서, Track B는 Colab GPU(\texttt{cuda})에서 학습했다.
+torch 2.6은 \texttt{mps}에서 \texttt{official.py}가 요청하는 \texttt{channels\_last} 메모리 형식 때문에 첫 backward에서
+``view size is not compatible with input tensor's size and stride'' 오류로 멈췄다. \texttt{official.py}는 고치지 않고,
+\texttt{.to(memory\_format=torch.channels\_last)}만 아무 일도 하지 않게 만든 래퍼 \texttt{scripts/official\_mps.py}로 실행했다.
+recipe, 사진 선택, 예산(249,984장), seed, 검증 방식은 \texttt{official.py} 그대로이고, 텐서의 메모리 배치만 다르다.
+채점기는 \texttt{cuda}에서 float16으로 학습하므로 내 검증 점수와 채점기 점수는 조금 다를 수 있다.
 
 % ---------------------------------------------------------------------------
 \section*{Track A}
 
 \begin{center}\footnotesize
-\begin{tabular}{lp{0.6\linewidth}r}
+\begin{tabular}{lp{0.58\linewidth}r}
 \toprule
-tag & what changed from the run before & validation \\
+tag & 이전 실행에서 바뀐 것 & validation \\
 \midrule
-\multicolumn{3}{l}{\fillin{one row per recipe, with the numbers from experiments.csv}} \\
+baseline (seed 0) & starter recipe 그대로, 학습 사진 44,257장 전부 & 0.4961 \\
+baseline (seed 1) & seed만 0 $\to$ 1 (우연에 의한 흔들림 측정) & 0.4956 \\
+balanced & \texttt{sample\_weights}: 각 사진에 1/(그 도시 사진 수), 도시를 같은 빈도로 뽑음 & 0.5076 \\
+balanced\_drop & 사진을 보고 고른 115장 제외 (44,257 $\to$ 44,142장), recipe는 balanced 그대로 & 0.5099 \\
+no\_flip & \texttt{T.RandomHorizontalFlip()} 제거, 사진 선택은 balanced\_drop 그대로 & 0.5001 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\fillin{What you tried, why, and what you think each result means.}
+\begin{center}\footnotesize
+\begin{tabular}{lrrrrrr}
+\toprule
+도시별 정답률 & seoul & busan & tokyo & osaka & taipei & 평균 \\
+\midrule
+baseline & 0.595 & 0.386 & 0.624 & 0.344 & 0.531 & 0.496 \\
+balanced & 0.496 & 0.471 & 0.520 & 0.435 & 0.616 & 0.508 \\
+balanced\_drop & 0.536 & 0.459 & 0.517 & 0.423 & 0.614 & 0.510 \\
+no\_flip & 0.550 & 0.430 & 0.511 & 0.419 & 0.590 & 0.500 \\
+\midrule
+학습 사진 수 & 11,274 & 5,191 & 13,347 & 7,200 & 7,245 & \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-\fillin{Your final recipe and selection, and their leaderboard score next to
-their validation score.}
+\textbf{seed에 따른 흔들림.} 같은 starter recipe를 seed 0과 1로 학습하니 0.4961과 0.4956으로 평균은 0.0005 차이였다. 그러나 도시별로는 오사카 0.344 $\to$ 0.367(+0.024), 도쿄 0.624 $\to$ 0.607($-$0.017)처럼 더 크게 움직였다. 결과를 어떻게 보는지(내 말): ``같은 설정인데도 값이 살짝 다른걸 보면 기계라고 그 전껄 100\%같게 판독하지 못한다는 걸 알았다. 사람처럼 얘네도 시행마다 살짝씩 다르단걸''.
+README에 따르면 같은 recipe도 다시 학습하면 2--3점 움직일 수 있다. 아래의 각 변경은 seed 0으로 한 번씩만 학습했으므로,
+이 흔들림보다 작은 차이는 우연일 수 있다.
+
+\textbf{balanced.} 학습 사진 수가 도쿄 13,347장, 부산 5,191장으로 2.6배 차이가 난다. 왜 골랐는지(내 말):
+``어차피 최대 양의 사진 (도쿄)꺼를 해야하는데 그거만 13,347할게 아니라 그 시간에 부산도 여러번 보면 정확도가 올라갈거라 생각해서 밸런스 선택''.
+평균은 0.496에서 0.508로 올랐다. 부산(+0.085), 오사카(+0.091), 타이베이(+0.085)는 올랐고 서울($-$0.099), 도쿄($-$0.104)는 내려갔다.
+검증 사진 12,077장에 대한 모델의 답을 세어 보면, baseline은 ``부산''이라고 938번 답했고(실제 부산 사진 1,390장) ``도쿄''라고 4,320번 답했다(실제 3,881장).
+balanced는 ``부산'' 1,362번, ``도쿄'' 3,318번으로, 사진이 많은 도시 쪽으로 쏠리던 답이 고르게 바뀌었다
+(\texttt{results/*/result.json}의 confusion matrix). 결과를 어떻게 보는지(내 말):
+``서울 도쿄를 제외한 나머지 도시는 베이스라인보다 높은 정확도를 보여줬는데 그 이유는 아무래도 사진 양이 적었기에 여러번 학습하여 정확도가 올라갔다고 보여짐''.
+
+\textbf{no\_flip.} 좌우반전을 하면 간판 글자가 거울 글씨가 되고 차가 다니는 쪽이 바뀐다. 왜 골랐는지(내 말):
+``좌우반전을 하면 너 말대로 일본과 같은 반대인 나라에 대한 오류가 생길거라 생각이 들어''.
+다른 후보(더 강한 확대 자르기, label smoothing 끄기)를 고르지 않은 이유(내 말):
+``확대해봤자 픽셀이 더 세분화되는거 아니니 도움 안될거같고 100\%라는건 세상에 없어''.
+결과: 0.5099 $\to$ 0.5001($-$0.0098)로 내려갔다. 좌측통행인 도쿄($-$0.007)와 오사카($-$0.004)도 오르지 않았고, 부산($-$0.029)과 타이베이($-$0.024)가 가장 많이 내려갔으며 서울만 +0.014 올랐다. 결과를 어떻게 보는지(내 말): ``예상과 달리 떨어졌고, 이유는 모르겠다''. 그래서 릴리즈하지 않았고 \texttt{track\_a/recipe.py}는 track-a-3의 버전으로 되돌렸다.
+
+\textbf{최종 recipe와 리더보드.} 마지막 Track A 릴리즈는 \texttt{track-a-3}(balanced + 115장 제외, validation 0.5099)이다.
+리더보드 점수는 이 보고서를 쓴 시점(11월 9일 밤)에 아직 공개되지 않았다. 매일 자정 채점 결과가 다음 날 아침에 올라오고,
+나는 11월 9일에 처음 릴리즈했기 때문이다. 그래서 검증 점수와 리더보드 점수를 나란히 비교하지 못했다.
 
 % ---------------------------------------------------------------------------
-\section*{Decisions you made from photos}
+\section*{사진을 보고 내린 결정}
 
-\picturefile{figures/mistakes_baseline_seed0_busan_00.png}
+\picturefile{figures/suspects_baseline_seed0_busan_00.png}
 
-\fillin{What you looked at, what you saw in common, and the rule you wrote
-before acting.}
+\textbf{무엇을 봤나.} baseline 모델로 \texttt{curate.py suspects results/baseline\_seed0/model.onnx --every 4}를 돌려,
+각 도시 학습 사진 중 모델이 그 도시일 확률을 가장 낮게 준 48장씩(위 그림은 부산)을 봤다.
+처음 도시별 사진(\texttt{curate.py look})을 봤을 때 도시를 구분하는 단서로 적은 것(내 말):
+``서울 잠실 주경기장을 통해 알수 있음, 부산 - 해운대 모래사장을 통해 알 수 있음, 도쿄 - JR전철을 통해(초록색), 오사카 - 도톤보리 수로를 통해, 타이페이 - 한자와 타이페이101을 통해 알 수 있음''.
 
-\fillin{What you changed (the output of curate.py count, or the photos you
-added), and the scores before and after.}
+\textbf{규칙 (빼기 전에 정함, 내 말).} ``사람사진과 음식 사진 그 두개는 어디 나라인지정도까진 추측이 가능해도 도시를 알기는 어려움 그리고 의미없는 자동차 이런거 다 없앰''.
 
-\fillin{The requests you gave your agent for these decisions.}
+\textbf{무엇을 바꿨나.} 이 규칙에 맞는 사진을 시트 번호로 직접 골라 115장을 뺐다(서울 25, 부산 29, 도쿄 26, 오사카 25, 타이베이 10).
+\texttt{curate.py count}의 출력:
+\outputfile{outputs/curate_count.txt}
+
+\textbf{점수.} balanced 0.5076 $\to$ balanced\_drop 0.5099 (+0.0023). 서울은 0.496 $\to$ 0.536으로 올랐고 나머지 도시는 거의 그대로이거나 조금 내려갔다.
+115장은 학습 사진의 0.26\%이고, 차이는 seed 흔들림보다 작을 가능성이 크다. 결과를 어떻게 보는지(내 말):
+``아무래도 그 많은 사진 중에 115장 밖에 안뺐는데 당연히 정확도가 거의 그대로겠지 정말 다량의 사진을 검수 수거 하지 않는한 크게 안바뀔거야''.
+
+\textbf{에이전트에게 준 요청.} 사진을 고른 것과 규칙은 내가 정했고, 에이전트는 그 번호를 그대로 \texttt{curate.py drop}으로 뺐다.
+\outputfile{outputs/requests.txt}
 
 % ---------------------------------------------------------------------------
 \section*{Track B}
 
-\fillin{What you tried, one step at a time, and the validation score after
-each step.}
+\begin{center}\footnotesize
+\begin{tabular}{lp{0.58\linewidth}r}
+\toprule
+tag & 바뀐 것 & validation \\
+\midrule
+b1\_mnv3l\_320 & 첫 모델: MobileNetV3-Large(\texttt{IMAGENET1K\_V2}), 320px, 6 epoch, 도시 균등(\texttt{--balance}), starter 사진만 & 0.5631 \\
+b2\_mnv3l\_384 & 이미지 크기만 320 $\to$ 384 & 0.5699 \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-\fillin{How you collected any extra photos.}
+\textbf{b1.} \texttt{train\_b.py} 기본값(ResNet18, 224px, 4 epoch)과 비교하면 모델, 이미지 크기, epoch, 균등 뽑기를 한꺼번에 바꿨기 때문에,
+이 중 무엇이 도움이 됐는지는 b1만으로는 알 수 없다. 4.20M 파라미터, 0.44 GMACs.
+Track A의 balanced(0.508)보다 높게 나온 이유를 어떻게 보는지(내 말):
+``사진을 크게 보면 픽셀이 조각되면서 컴퓨터가 학습을 조금더 세밀하게할 수 있어서 더 높은 값을 추출했다''.
 
-\fillin{Your validation score next to your leaderboard score, and why they
-might disagree.}
+\textbf{b2.} 위의 생각을 확인하려고 이미지 크기 하나만 384로 키웠다(0.63 GMACs). 0.5631 $\to$ 0.5699(+0.0068)로 올랐다.
+서울(+0.032), 도쿄(+0.023)는 올랐고 부산($-$0.017), 오사카($-$0.017)는 내려갔다. 결과를 어떻게 보는지(내 말): ``픽셀을 더 쪼개야한다고 봐''.
+seed마다 다시 학습해 보지 않았으므로 +0.007이 크기 때문인지 우연인지는 확실하지 않다.
 
-\subsection*{Your submission, as the grader sees it}
+\textbf{추가 사진.} 모으지 않았다. 두 모델 모두 starter 학습 사진만 썼다.
+
+\textbf{검증 점수와 리더보드 점수.} b1은 11월 9일 \texttt{track-b-1}, b2는 같은 날 23:37에 \texttt{track-b-2}로 릴리즈했다.
+리더보드 점수는 보고서 작성 시점에 아직 공개되지 않았다. 두 점수가 다를 수 있는 이유: 검증 사진은 Wikimedia Commons, OSV-5M, YouTube가 섞인
+starter와 같은 출처의 사진이지만, 리더보드 사진은 starter에 없는 채널의 YouTube 거리 영상 프레임이고, 최종 사진은 휴대폰으로 찍은 거리 사진이다.
+학습 사진의 절반 이상이 Wikimedia Commons 사진이라, 거리 영상 프레임에서는 점수가 더 낮게 나올 수 있다.
+
+\subsection*{채점기와 같은 방식으로 본 제출물 (b2)}
 \outputfile{outputs/check_submission.txt}
 
 % ---------------------------------------------------------------------------
-\section*{What made the difference}
+\section*{무엇이 차이를 만들었나}
 
-\fillin{Which change helped most and which least, in both tracks, with your
-numbers.}
+\begin{itemize}
+  \item Track A에서 가장 큰 변화는 balanced(+0.0115)였다. 사진을 빼기(+0.0023)는 거의 변화가 없었다. no\_flip은 $-$0.0098로 오히려 내려갔다.
+  \item Track B에서 이미지 크기 320 $\to$ 384는 +0.0068이었다.
+  \item 두 트랙 사이의 차이(Track A 최고 0.510, Track B 최고 0.570)가 가장 컸지만, Track B는 모델, 이미지 크기, epoch을 함께 바꿨으므로 어느 것 때문인지는 따로 재지 않았다.
+  \item 각 변경은 seed 0으로 한 번씩만 학습했다. baseline의 두 seed는 평균이 0.0005밖에 차이 나지 않았지만 도시별로는 0.024까지 움직였고, 흔들림을 두 번만 쟀으므로 balanced(+0.0115)처럼 큰 차이와 달리 115장 제외(+0.0023) 같은 작은 차이는 우연과 확실히 구분할 수 없다.
+\end{itemize}
 
-\fillin{What you would do next with one more week.}
+\textbf{일주일이 더 있다면(내 말).} ``픽셀을 훨씬 더 많이 줄여서 이걸 반복해서 실험해보고 싶음 내 가설 증명하고 싶음''.
 
 % ---------------------------------------------------------------------------
 \section*{All runs}
